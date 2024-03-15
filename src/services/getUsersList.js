@@ -5,7 +5,7 @@ const getUsersList = async (page, perPage) => {
   let users = await User.find({}, "username firstName lastName rating")
     .skip(page * perPage)
     .limit(perPage);
-  return users.map(cleanResponse)
+  return await users.map(cleanResponse)
 };
 
 module.exports = getUsersList;

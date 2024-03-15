@@ -1,4 +1,5 @@
 const User = require("./../models/User.js");
+const Vote = require('./../models/Vote.js')
 
 const setVoteTime = async (userID) => {
   await User.findByIdAndUpdate(userID, {
@@ -6,38 +7,56 @@ const setVoteTime = async (userID) => {
   });
 };
 
-const upVote = async (userID, voteID) => {
-  const user = await User.findById(voteID, "rating");
-  const upIndex = user.rating.upVotes.indexOf(userID);
-  const downIndex = user.rating.downVotes.indexOf(userID);
-  if (upIndex != -1) {
-    user.rating.upVotes.splice(upIndex, 1);
-    await setVoteTime(userID)
-    return await user.save();
-  }
-  if (downIndex != -1) {
-    user.rating.downVotes.splice(downIndex, 1);
-  }
-  await setVoteTime(userID)
-  user.rating.upVotes.push(userID);
-  await user.save();
-};
+const changeRating = async (targetID, number) => {
+  let targetUser = await User.findById(targetID, "rating")
+  targetUser.rating = Number(targetUser.rating) + Number(number)
+  await targetUser.save()
+}
 
-const downVote = async (userID, voteID) => {
-  const user = await User.findById(voteID, "rating");
-  const upIndex = user.rating.upVotes.indexOf(userID);
-  const downIndex = user.rating.downVotes.indexOf(userID);
-  if (downIndex != -1) {
-    user.rating.downVotes.splice(downIndex, 1);
+const upVote = async (userID, targetID) => {
+  let vote = await Vote.findOne({user: userID, targetUser:targetID})
+  if (!vote){
+    const newVote = new Vote({
+      user: userID,
+      targetUser: targetID,
+      voteType: "upvote"
+    })
+    await changeRating(targetID, '+1')
     await setVoteTime(userID)
-    return await user.save();
+    return await newVote.save()
   }
-  if (upIndex != -1) {
-    user.rating.upVotes.splice(upIndex, 1);
+  if (vote.voteType == "upvote") {
+    await changeRating(targetID, '-1')
+    await setVoteTime(userID)
+    return await Vote.deleteOne({_id: vote.id})
   }
-  user.rating.downVotes.push(userID);
+  vote.voteType = "upvote"
+  await changeRating(targetID, '+2')
   await setVoteTime(userID)
-  await user.save();
-};
+  return await vote.save()
+}
+
+const downVote = async (userID, targetID) => {
+  let vote = await Vote.findOne({user: userID, targetUser: targetID})
+  if (!vote) {
+    const newVote = new Vote({
+      user: userID,
+      targetUser: targetID,
+      voteType: "downvote",
+    })
+    await changeRating(targetID, '+1')
+    await setVoteTime(userID)
+    return await newVote.save()
+  }
+  if(vote.voteType == "downvote") {
+    await changeRating(targetID, '-1')
+    await setVoteTime(userId)
+    return await Vote.deleteOne({_id: vote.id})
+  }
+  vote.voteType = "downvote"
+  await changeRating(targetID, '+2')
+  await setVoteTime(userID)
+  return await vote.save()
+}
 
 module.exports = { upVote, downVote };

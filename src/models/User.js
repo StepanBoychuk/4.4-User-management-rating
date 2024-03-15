@@ -23,11 +23,11 @@ const userSchema = new Schema(
       default: "user",
     },
     rating: {
-      upVotes: Array,
-      downVotes: Array,
+      type: String,
+      default: 0,
     },
     lastVoteTime: {
-      type: Date
+      type: Date,
     },
     deletedAt: {
       type: Date,
@@ -36,6 +36,7 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
 
 userSchema.pre("save", async function (next) {
   if (this.password) {
@@ -54,7 +55,6 @@ userSchema.pre("findOneAndUpdate", async function (next) {
 
 userSchema.pre("find", async function (next) {
   this.where({ deletedAt: null });
-  this.rating = 0
   next();
 });
 userSchema.pre("findOne", async function (next) {
