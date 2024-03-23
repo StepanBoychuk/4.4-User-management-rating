@@ -7,11 +7,11 @@ const setVoteTime = async (userID) => {
   });
 };
 
-const changeRating = async (targetID, number) => {
-  let targetUser = await User.findById(targetID, "rating")
-  targetUser.rating = Number(targetUser.rating) + Number(number)
-  await targetUser.save()
-}
+// const changeRating = async (targetID, number) => {
+//   let targetUser = await User.findById(targetID, "rating")
+//   targetUser.rating = Number(targetUser.rating) + Number(number)
+//   await targetUser.save()
+// }
 
 const upVote = async (userID, targetID) => {
   let vote = await Vote.findOne({user: userID, targetUser:targetID})
@@ -21,17 +21,14 @@ const upVote = async (userID, targetID) => {
       targetUser: targetID,
       voteType: "upvote"
     })
-    await changeRating(targetID, '+1')
     await setVoteTime(userID)
     return await newVote.save()
   }
   if (vote.voteType == "upvote") {
-    await changeRating(targetID, '-1')
     await setVoteTime(userID)
     return await Vote.deleteOne({_id: vote.id})
   }
   vote.voteType = "upvote"
-  await changeRating(targetID, '+2')
   await setVoteTime(userID)
   return await vote.save()
 }
@@ -44,17 +41,14 @@ const downVote = async (userID, targetID) => {
       targetUser: targetID,
       voteType: "downvote",
     })
-    await changeRating(targetID, '+1')
     await setVoteTime(userID)
     return await newVote.save()
   }
   if(vote.voteType == "downvote") {
-    await changeRating(targetID, '-1')
     await setVoteTime(userId)
     return await Vote.deleteOne({_id: vote.id})
   }
   vote.voteType = "downvote"
-  await changeRating(targetID, '+2')
   await setVoteTime(userID)
   return await vote.save()
 }

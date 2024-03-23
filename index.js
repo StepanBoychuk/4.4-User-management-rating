@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./src/services/updateUserRating.js")
 const logger = require("./src/logger");
 const express = require("express");
 const mongoose = require("mongoose");
