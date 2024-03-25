@@ -13,8 +13,8 @@ const {
 const auth = require("../../middlwares/auth.js");
 const signin = require("./../../services/signin.js");
 const canChangeUserData = require("./../../middlwares/canChangeUserData.js");
-const { upVote, downVote } = require("./../../services/rating.js");
-const lastVoteTime = require('./../../middlwares/lastVoteTime.js')
+const vote = require("./../../services/rating.js");
+const lastVoteTime = require("./../../middlwares/lastVoteTime.js");
 
 const usersAPI = Router();
 
@@ -104,25 +104,23 @@ usersAPI.post("/api/users/signin", async (req, res) => {
   }
 });
 
-usersAPI.get("/api/users/upvote/:id", auth, lastVoteTime, async (req, res) => {
+usersAPI.post("/api/users/:id/vote", auth, lastVoteTime, async (req, res) => {
   try {
     if (req.user.id == req.params.id) {
-      res.status(400).send("Voting for yourself is not allowed");
+      return res.status(400).send("Voting for yourself is not allowed");
     }
-    await upVote(req.user.id, req.params.id);
-    res.send();
-  } catch (error) {
-    logger.error(error);
-    res.status(404).send("User not found");
-  }
-});
-
-usersAPI.get("/api/users/downvote/:id", auth, lastVoteTime, async (req, res) => {
-  try {
-    if (req.user.id == req.params.id) {
-      res.status(400).send("Voting for yourself is not allowed");
+    const { voteType } = req.body;
+    if (!voteType) {
+      return res.status(400).send("voteType field is required");
     }
-    await downVote(req.user.id, req.params.id);
+    if (voteType !== "upvote" && voteType !== "downvote") {
+      return res
+        .status(400)
+        .send(
+          `Invalid voteType value. It should be either "upvote" or "downvote"`
+        );
+    }
+    await vote(req.user.id, req.params.id, req.body.voteType);
     res.send();
   } catch (error) {
     logger.error(error);

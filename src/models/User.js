@@ -23,7 +23,7 @@ const userSchema = new Schema(
       default: "user",
     },
     rating: {
-      type: String,
+      type: Number,
       default: 0,
     },
     lastVoteTime: {
