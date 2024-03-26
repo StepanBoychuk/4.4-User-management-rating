@@ -1,9 +1,13 @@
-const User = require("./../models/User");
+const Vote = require("./../models/Vote.js");
 
 const lastVoteTime = async (req, res, next) => {
-  const user = await User.findById(req.user.id, "lastVoteTime");
-  if ((new Date() - user.lastVoteTime) / 60000 < 60) {
-    return res.status(429).send("You can vote once in an hour");
+  const oneHourAgo = new Date(Date.now() - 3600000);
+  const vote = await Vote.findOne({
+    user: req.user.id,
+    updatedAt: { $gt: oneHourAgo },
+  });
+  if (vote) {
+    return res.status(429).send("You can vote once an hour");
   }
   next();
 };

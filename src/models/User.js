@@ -26,9 +26,6 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
-    lastVoteTime: {
-      type: Date,
-    },
     deletedAt: {
       type: Date,
       default: null,

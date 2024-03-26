@@ -29,4 +29,4 @@ will soft delete user with this id. Require JWT token in authorisation header.
 
 >POST /api/user/:id/vote
 
-will vote for user with :id. Require JWT token in authorisation header and "voteType" field in request body. "voteType" can be only "upvote" or "downvote"
+will vote for user with :id. Require JWT token in authorisation header and "voteType" field in request body. "voteType" can be only "1" or "-1"

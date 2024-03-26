@@ -12,11 +12,12 @@ const VoteSchema = new Schema({
     required: true,
   },
   voteType: {
-    type: String,
-    enum: ["upvote", "downvote"],
+    type: Number,
+    enum: [1, 0, -1],
     required: true,
   },
-});
+},
+{ timestamps: true});
 
 const Vote = model("Votes", VoteSchema, "votes");
 

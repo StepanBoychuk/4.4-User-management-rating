@@ -15,6 +15,7 @@ const signin = require("./../../services/signin.js");
 const canChangeUserData = require("./../../middlwares/canChangeUserData.js");
 const vote = require("./../../services/rating.js");
 const lastVoteTime = require("./../../middlwares/lastVoteTime.js");
+const ifUserExist = require("./../../middlwares/ifUserExist.js");
 
 const usersAPI = Router();
 
@@ -37,13 +38,14 @@ usersAPI.get("/api/users", async (req, res) => {
   }
 });
 
-usersAPI.get("/api/users/:id", async (req, res) => {
+usersAPI.get("/api/users/:id", ifUserExist, async (req, res) => {
   try {
     const user = await getUser(req.params.id);
     const { updatedAt } = user;
     res.setHeader("Last-Modified", updatedAt).send(cleanResponse(user));
   } catch (erorr) {
-    res.status(404).send("User not found");
+    logger.error(error)
+    res.status(500).send(error.message);
   }
 });
 
@@ -60,6 +62,7 @@ usersAPI.post("/api/users/signup", createValidator, async (req, res) => {
 usersAPI.put(
   "/api/users/:id",
   auth,
+  ifUserExist,
   canChangeUserData,
   updateValidator,
   async (req, res) => {
@@ -81,7 +84,7 @@ usersAPI.put(
   }
 );
 
-usersAPI.delete("/api/users/:id", auth, canChangeUserData, async (req, res) => {
+usersAPI.delete("/api/users/:id", auth, ifUserExist, canChangeUserData, async (req, res) => {
   try {
     await deleteUser(req.params.id);
     res.send(new Date().toUTCString());
@@ -104,7 +107,7 @@ usersAPI.post("/api/users/signin", async (req, res) => {
   }
 });
 
-usersAPI.post("/api/users/:id/vote", auth, lastVoteTime, async (req, res) => {
+usersAPI.post("/api/users/:id/vote", auth, ifUserExist, lastVoteTime, async (req, res) => {
   try {
     if (req.user.id == req.params.id) {
       return res.status(400).send("Voting for yourself is not allowed");
@@ -113,18 +116,18 @@ usersAPI.post("/api/users/:id/vote", auth, lastVoteTime, async (req, res) => {
     if (!voteType) {
       return res.status(400).send("voteType field is required");
     }
-    if (voteType !== "upvote" && voteType !== "downvote") {
+    if (voteType != 1 && voteType != -1) {
       return res
         .status(400)
         .send(
-          `Invalid voteType value. It should be either "upvote" or "downvote"`
+          `Invalid voteType value. It should be either "1" or "-1"`
         );
     }
     await vote(req.user.id, req.params.id, req.body.voteType);
     res.send();
   } catch (error) {
     logger.error(error);
-    res.status(404).send("User not found");
+    res.status(500).send(error.message);
   }
 });
 
