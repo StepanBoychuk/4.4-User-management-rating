@@ -10,6 +10,7 @@ const {
   createValidator,
   updateValidator,
 } = require("./../../validation/userValidation.js");
+const voteValidator = require("./../../validation/voteValidation.js");
 const auth = require("../../middlwares/auth.js");
 const signin = require("./../../services/signin.js");
 const canChangeUserData = require("./../../middlwares/canChangeUserData.js");
@@ -44,7 +45,7 @@ usersAPI.get("/api/users/:id", ifUserExist, async (req, res) => {
     const { updatedAt } = user;
     res.setHeader("Last-Modified", updatedAt).send(cleanResponse(user));
   } catch (erorr) {
-    logger.error(error)
+    logger.error(error);
     res.status(500).send(error.message);
   }
 });
@@ -62,8 +63,9 @@ usersAPI.post("/api/users/signup", createValidator, async (req, res) => {
 usersAPI.put(
   "/api/users/:id",
   auth,
-  ifUserExist,
   canChangeUserData,
+  ifUserExist,
+
   updateValidator,
   async (req, res) => {
     try {
@@ -84,15 +86,22 @@ usersAPI.put(
   }
 );
 
-usersAPI.delete("/api/users/:id", auth, ifUserExist, canChangeUserData, async (req, res) => {
-  try {
-    await deleteUser(req.params.id);
-    res.send(new Date().toUTCString());
-  } catch (error) {
-    logger.error(error);
-    res.status(500).send(error.message);
+usersAPI.delete(
+  "/api/users/:id",
+  auth,
+  canChangeUserData,
+  ifUserExist,
+
+  async (req, res) => {
+    try {
+      await deleteUser(req.params.id);
+      res.send(new Date().toUTCString());
+    } catch (error) {
+      logger.error(error);
+      res.status(500).send(error.message);
+    }
   }
-});
+);
 
 usersAPI.post("/api/users/signin", async (req, res) => {
   try {
@@ -107,28 +116,21 @@ usersAPI.post("/api/users/signin", async (req, res) => {
   }
 });
 
-usersAPI.post("/api/users/:id/vote", auth, ifUserExist, lastVoteTime, async (req, res) => {
-  try {
-    if (req.user.id == req.params.id) {
-      return res.status(400).send("Voting for yourself is not allowed");
+usersAPI.post(
+  "/api/users/:id/vote",
+  auth,
+  ifUserExist,
+  voteValidator,
+  lastVoteTime,
+  async (req, res) => {
+    try {
+      await vote(req.user.id, req.params.id, req.body.voteType);
+      res.send();
+    } catch (error) {
+      logger.error(error);
+      res.status(500).send(error.message);
     }
-    const { voteType } = req.body;
-    if (!voteType) {
-      return res.status(400).send("voteType field is required");
-    }
-    if (voteType != 1 && voteType != -1) {
-      return res
-        .status(400)
-        .send(
-          `Invalid voteType value. It should be either "1" or "-1"`
-        );
-    }
-    await vote(req.user.id, req.params.id, req.body.voteType);
-    res.send();
-  } catch (error) {
-    logger.error(error);
-    res.status(500).send(error.message);
   }
-});
+);
 
 module.exports = usersAPI;
